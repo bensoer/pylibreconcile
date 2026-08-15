@@ -4,11 +4,12 @@ mode: subagent
 model: my-opencode/poolside/laguna-s-2.1:free
 permission:
   edit:
+    "*": deny
     "**/.gitignore": allow
     "**/.gitattributes": allow
     "**/.pre-commit-config.yaml": allow
-    "*": deny
   bash:
+    "*": ask
     "git *": allow
     "gh *": allow
     "make *": allow
@@ -19,7 +20,6 @@ permission:
     "git push*-f*": deny
     "git filter-branch*": deny
     "git filter-repo*": deny
-    "*": ask
   webfetch: deny
 ---
 
