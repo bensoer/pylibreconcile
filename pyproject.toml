@@ -21,8 +21,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
+    "azure-core>=1.41.0",
     "azure-storage-blob>=12.30.0",
     "boto3>=1.43.72",
+    "pyyaml>=6.0.3",
 ]
 
 [project.urls]

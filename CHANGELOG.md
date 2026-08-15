@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `KnownStateHandler` protocol and its implementations:
   `LocalJSONKnownStateHandler`, `AzureStorageKnownStateHandler`, and
   `AWSS3KnownStateHandler`.
+
+### Changed
+
+- `AzureStorageKnownStateHandler` now authenticates with a
+  `TokenCredential` (e.g. `DefaultAzureCredential`) and an `account_url`
+  instead of a connection string.
 - Git `pre-commit` hook that runs lint, format-check, typecheck, and security
   checks via the existing `make` targets. Install with `make pre-commit-install`.
 - Initial project scaffolding.

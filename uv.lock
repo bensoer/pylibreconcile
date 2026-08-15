@@ -1222,8 +1222,10 @@ name = "pylibreconcile"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "azure-core" },
     { name = "azure-storage-blob" },
     { name = "boto3" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -1248,8 +1250,10 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "azure-core", specifier = ">=1.41.0" },
     { name = "azure-storage-blob", specifier = ">=12.30.0" },
     { name = "boto3", specifier = ">=1.43.72" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
 [package.metadata.requires-dev]
