@@ -22,9 +22,15 @@ htmlcov/
 .ruff_cache/
 .bandit_cache/
 
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
 # Documentation
 docs/build/
 docs/sphinx/build/
+docs/sphinx/source/_autosummary/
 
 # IDE / editor
 .idea/
