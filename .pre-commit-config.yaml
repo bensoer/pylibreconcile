@@ -1,0 +1,32 @@
+fail_fast: true
+
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: Ruff lint (syntax / style)
+        entry: make lint
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+
+      - id: format-check
+        name: Ruff format --check
+        entry: make format-check
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+
+      - id: typecheck
+        name: mypy (strict)
+        entry: make typecheck
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+
+      - id: security
+        name: bandit + pip-audit
+        entry: make security
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
