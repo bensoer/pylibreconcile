@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `KnownStateHandler` protocol and its implementations:
+  `LocalJSONKnownStateHandler`, `AzureStorageKnownStateHandler`, and
+  `AWSS3KnownStateHandler`.
 - Git `pre-commit` hook that runs lint, format-check, typecheck, and security
   checks via the existing `make` targets. Install with `make pre-commit-install`.
 - Initial project scaffolding.

@@ -197,28 +197,40 @@ non-Sphinx content. Sphinx stays under `docs/sphinx/`.
    `explore` subagent. Delegate multi-step research tasks to the `general`
    subagent. Use the `context7-mcp` skill for library / framework API
    questions.
-9a. **Concrete tasks → `laguna-s-2.1` subagent (preferred)**: the
-    `laguna-s-2.1` model is free, so when a task has clearly-defined
-    steps and edits — even ones the main agent could just do itself —
-    delegate to it via the `task` tool with
-    `subagent_type: "laguna-s-2.1"` to save cost. It is defined in
-    `.opencode/agents/laguna-s-2.1.md` (model:
-    `my-opencode/poolside/laguna-s-2.1:free`) and operates as a strict
-    executor. Its personal strength is code work (source edits, tests,
-    refactors, bug fixes, broken-test fixes); clear and concise
-    infrastructure or documentation edits are also good fits. Reserve the
-    main agent for work that needs review, planning, prose drafting, full
-    CI-style validation, architecture decisions, or design exploration —
-    i.e. work where "figuring out what to do" is most of the job. The
-    subagent may use `make test-fast` / `make typecheck` / `make lint`
-    as feedback loops on its own work, but it does not run full
-    validation pipelines, does not review, does not architect, and does
-    not orchestrate. When delegating:
+9a. **Concrete tasks → `code-worker` subagent (preferred)**: the model
+    backing it (`my-opencode/poolside/laguna-s-2.1:free`) is free, so
+    when a task has clearly-defined steps and edits — even ones the main
+    agent could just do itself — delegate to it via the `task` tool with
+    `subagent_type: "code-worker"` to save cost. It is defined in
+    `.opencode/agents/code-worker.md` and operates as a strict executor.
+    Its personal strength is code work (source edits, tests, refactors,
+    bug fixes, broken-test fixes); clear and concise infrastructure or
+    documentation edits are also good fits. Reserve the main agent for
+    work that needs review, planning, prose drafting, full CI-style
+    validation, architecture decisions, or design exploration — i.e. work
+    where "figuring out what to do" is most of the job. The subagent may
+    use `make test-fast` / `make typecheck` / `make lint` as feedback
+    loops on its own work, but it does not run full validation pipelines,
+    does not review, does not architect, and does not orchestrate. When
+    delegating:
     - State the task and the exact files / functions expected to change.
     - Specify any hard constraints (style, API stability, public surface).
     - Point at any reference files to mirror.
     - Ask for the final output as the subagent's last message — no
       intermediate narration.
+9b. **Git operations → `git-maintainer` subagent**: any git/GitHub
+    action — staging, committing, pushing, worktree/branch/tag CRUD,
+    PRs via `gh`, `.gitignore` / `.gitattributes` /
+    `.pre-commit-config.yaml` edits, pre-commit hook diagnostics — goes
+    through `git-maintainer` via `subagent_type: "git-maintainer"`.
+    Defined at `.opencode/agents/git-maintainer.md` (model:
+    `my-openrouter/google/gemma-4-31b-it:free`). It refuses to rewrite
+    history (no `--amend`, `rebase`, `--hard` reset, or `--force` push)
+    and edits only git-config files; source/test/doc fixes are delegated
+    back to `code-worker`. Pre-commit hooks must be green before push —
+    failures are reported back, not bypassed with `--no-verify`. Use this
+    subagent for staging concerns, splitting src/tests/docs/tooling into
+    separate commits per rule 11, and pushing branches / opening PRs.
 10. **Do not delete `uv.lock`.** It is committed intentionally for libraries.
 11. **See `.agents/rules/separate-commits.md`** for the rule on staging
     `src/`, `tests/`, and `docs/` as distinct commits.
