@@ -1,5 +1,7 @@
 """Tests for the KnownStateHandler protocol."""
 
+from pathlib import Path
+
 from pylibreconcile import (
     AWSS3KnownStateHandler,
     AzureStorageKnownStateHandler,
@@ -11,7 +13,7 @@ from pylibreconcile import (
 def test_local_handler_is_instance_of_protocol() -> None:
     """Verify a concrete handler satisfies the KnownStateHandler protocol."""
 
-    handler = LocalJSONKnownStateHandler("state.json")
+    handler = LocalJSONKnownStateHandler(Path("state.json"))
     assert isinstance(handler, KnownStateHandler)
 
 

@@ -6,18 +6,32 @@ import pytest
 
 from pylibreconcile import AzureStorageKnownStateHandler
 
-CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test"
+ACCOUNT_URL = "https://account.blob.core.windows.net"
 CONTAINER_NAME = "container"
+CREDENTIAL = MagicMock()
 
 
 def _make_handler() -> tuple[AzureStorageKnownStateHandler, MagicMock]:
     container = MagicMock()
-    with patch(
-        "pylibreconcile.known_state.azure.ContainerClient.from_connection_string",
-        return_value=container,
-    ):
-        handler = AzureStorageKnownStateHandler(CONNECTION_STRING, CONTAINER_NAME)
+    service = MagicMock()
+    service.get_container_client.return_value = container
+    with patch("pylibreconcile.known_state.azure.BlobServiceClient", return_value=service):
+        handler = AzureStorageKnownStateHandler(ACCOUNT_URL, CREDENTIAL, CONTAINER_NAME)
     return handler, container
+
+
+def test_constructs_container_from_account_url_and_credential() -> None:
+    container = MagicMock()
+    service = MagicMock()
+    service.get_container_client.return_value = container
+    with patch(
+        "pylibreconcile.known_state.azure.BlobServiceClient", return_value=service
+    ) as client:
+        handler = AzureStorageKnownStateHandler(ACCOUNT_URL, CREDENTIAL, CONTAINER_NAME)
+
+    client.assert_called_once_with(ACCOUNT_URL, credential=CREDENTIAL)
+    service.get_container_client.assert_called_once_with(CONTAINER_NAME)
+    assert handler._container is container
 
 
 def test_has_key() -> None:
