@@ -4,6 +4,7 @@ from .known_state import (
     AzureStorageKnownStateHandler,
     KnownStateHandler,
     LocalJSONKnownStateHandler,
+    LocalSQLiteKnownStateHandler,
     LocalYAMLKnownStateHandler,
 )
 from .reconciler import Reconciler
@@ -14,6 +15,7 @@ __all__ = [
     "DesiredState",
     "KnownStateHandler",
     "LocalJSONKnownStateHandler",
+    "LocalSQLiteKnownStateHandler",
     "LocalYAMLKnownStateHandler",
     "Reconciler",
 ]
