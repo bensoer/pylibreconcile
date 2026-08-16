@@ -42,7 +42,7 @@ format:
 	uv run ruff format
 
 format-check:
-	uv run ruff format --check
+	uv run ruff format --check --exclude docs
 
 typecheck:
 	uv run mypy
