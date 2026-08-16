@@ -16,6 +16,9 @@ permission:
     "make *": allow
     "cat *": allow
     "ls *": allow
+    "grep *": allow
+    "git ls-remote *": allow
+    "echo *": allow
     "git commit --amend*": deny
     "git rebase*": deny
     "git reset --hard*": deny
