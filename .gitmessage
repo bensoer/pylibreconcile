@@ -1,0 +1,47 @@
+# Conventional Commits v1.0.0 — https://www.conventionalcommits.org/en/v1.0.0/
+#
+# Format:
+#
+#   <type>[optional scope][!]: <subject>
+#
+#   <body>
+#
+#   <footer>
+#
+# ─────────────────────────────────────────────────────────────────────────
+#   type     feat, fix, docs, style, refactor, perf, test, build, ci,
+#            chore, revert
+#   scope    optional — section of the codebase (e.g. api, cli, auth)
+#   !        flag a BREAKING CHANGE before the colon
+#   subject  imperative, lowercase, no trailing period, ≤ 72 chars
+#
+#   body     explain *why* the change is needed, not *what*. Wrap at 72.
+#            Link issues with "Refs: #123" or "Closes: #123".
+#
+#   footer   one token/value pair per line:
+#              BREAKING CHANGE: <description of the break and migration>
+#              Refs: #123
+#              Closes: #456
+# ─────────────────────────────────────────────────────────────────────────
+#
+# Example:
+#
+#   feat(api): add paginated list endpoint
+#
+#   Previously the list endpoint returned every record at once, which timed
+#   out for tenants over 10k rows. Add offset/limit query params and return
+#   400 when either exceeds the configured max.
+#
+#   BREAKING CHANGE: clients must now pass offset and limit; omitting
+#   them returns 400.
+#
+#   Closes: #42
+# ─────────────────────────────────────────────────────────────────────────
+
+<type>[optional scope][!]: <subject>
+
+
+<Replace this line with the body. Wrap at 72 chars. Use "Refs: #123" or "Closes: #123" to link issues.>
+
+
+<Replace this line with footer token/value pairs (BREAKING CHANGE:, Refs:, Closes:). Delete this section if not needed.>
