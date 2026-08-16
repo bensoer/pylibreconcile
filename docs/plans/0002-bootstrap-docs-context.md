@@ -372,13 +372,17 @@ class ServerDesired(DesiredState):
     hostname: str
     port: int
 
+
 # Caller side: wire observation + action
 class ServerObservedStateManager:
     def is_match(self, desired, known): ...
+
+
 class ServerResourceManager:
     def create(self, desired): ...
     def update(self, desired, known): ...
     def delete(self, known): ...
+
 
 # Hand it all to the library
 reconciler = Reconciler(
