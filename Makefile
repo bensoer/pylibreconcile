@@ -1,4 +1,4 @@
-.PHONY: help install sync lock lint format format-check typecheck security test test-fast docs docs-strict docs-clean build build-clean publish pre-commit-install pre-commit-run clean all
+.PHONY: help install sync lock lint format format-check typecheck security test test-fast docs docs-strict docs-clean build build-clean publish pre-commit-install pre-commit-run install-commit-template clean all
 
 help:
 	@echo "pylibreconcile — make targets"
@@ -21,6 +21,7 @@ help:
 	@echo "  publish       Publish built artifacts to PyPI (uv publish)"
 	@echo "  pre-commit-install  Install git pre-commit hooks"
 	@echo "  pre-commit-run      Run pre-commit on all files"
+	@echo "  install-commit-template  Configure .gitmessage as the git commit template (per clone)"
 	@echo "  clean         Remove all build / cache artifacts"
 	@echo "  all           Run lint, typecheck, security, test"
 	@echo ""
@@ -83,6 +84,9 @@ pre-commit-install:
 
 pre-commit-run:
 	uv run pre-commit run --all-files
+
+install-commit-template:
+	git config commit.template .gitmessage
 
 clean: build-clean docs-clean
 	rm -rf .coverage .coverage.* coverage.xml htmlcov
