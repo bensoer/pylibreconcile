@@ -220,7 +220,7 @@ non-Sphinx content. Sphinx stays under `docs/sphinx/`.
       intermediate narration.
 9b. **Git operations → `git-maintainer` subagent**: any git/GitHub
     action — staging, committing, pushing, worktree/branch/tag CRUD,
-    PRs via `gh`, `.gitignore` / `.gitattributes` /
+    opening PRs via `gh`, `.gitignore` / `.gitattributes` /
     `.pre-commit-config.yaml` edits, pre-commit hook diagnostics — goes
     through `git-maintainer` via `subagent_type: "git-maintainer"`.
     Defined at `.opencode/agents/git-maintainer.md` (model:
@@ -234,6 +234,15 @@ non-Sphinx content. Sphinx stays under `docs/sphinx/`.
 10. **Do not delete `uv.lock`.** It is committed intentionally for libraries.
 11. **See `.agents/rules/separate-commits.md`** for the rule on staging
     `src/`, `tests/`, and `docs/` as distinct commits.
+12. **Never merge PRs — only the human user can merge.** This is a
+    project-wide rule that applies to every agent, including
+    `git-maintainer`. Agents may **open** PRs via `gh pr create` and
+    **report** the PR URL, but they must not run `gh pr merge`,
+    `git merge`, or call the GitHub merge API in any form (no
+    `--admin`, no `--force`, no `--auto`, no script wrapper, no
+    GitHub Actions dispatch). The merge button is exclusively a human
+    action. If a task description says "open the PR and merge it," the
+    agent opens the PR, returns the URL, and stops; the user merges.
 
 ## Quick Recipes
 
