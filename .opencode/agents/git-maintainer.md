@@ -14,6 +14,8 @@ permission:
     "git *": allow
     "gh *": allow
     "make *": allow
+    "cat *": allow
+    "ls *": allow
     "git commit --amend*": deny
     "git rebase*": deny
     "git reset --hard*": deny
