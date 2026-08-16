@@ -1,4 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "my-opencode/minimax/minimax-m3:exacto"
+  "model": "my-opencode/minimax/minimax-m3:exacto",
+  "small_model": "my-opencode/openrouter/free"
 }
