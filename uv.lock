@@ -131,6 +131,15 @@ wheels = [
 ]
 
 [[package]]
+name = "boltdb"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f1/e7/2b1656b43683277f655a6a59b98314d5002f62f410becd3caeb99b10d616/boltdb-0.0.2.tar.gz", hash = "sha256:de15e756313cc74bb17fb637bdc5cb8180f0a803805cfe49be3326cf89542f42", size = 9468 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/6e/7ff4cb4c52ce83c6f1719197ab97dc8cf681c83b9d2cb41282a45c604303/boltdb-0.0.2-py3-none-any.whl", hash = "sha256:289107489c883d02823840b783a8ec7832ec76dc9deb9dc1d80297cffed72d54", size = 13569 },
+]
+
+[[package]]
 name = "boolean-py"
 version = "5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1224,6 +1233,7 @@ source = { editable = "." }
 dependencies = [
     { name = "azure-core" },
     { name = "azure-storage-blob" },
+    { name = "boltdb" },
     { name = "boto3" },
     { name = "pyyaml" },
 ]
@@ -1252,6 +1262,7 @@ docs = [
 requires-dist = [
     { name = "azure-core", specifier = ">=1.41.0" },
     { name = "azure-storage-blob", specifier = ">=12.30.0" },
+    { name = "boltdb", specifier = ">=0.0.2" },
     { name = "boto3", specifier = ">=1.43.72" },
     { name = "pyyaml", specifier = ">=6.0.3" },
 ]

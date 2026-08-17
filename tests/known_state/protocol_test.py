@@ -5,6 +5,7 @@ from pathlib import Path
 from pylibreconcile import (
     AWSS3KnownStateHandler,
     AzureStorageKnownStateHandler,
+    BoltDBKnownStateHandler,
     KnownStateHandler,
     LocalJSONKnownStateHandler,
 )
@@ -14,6 +15,13 @@ def test_local_handler_is_instance_of_protocol() -> None:
     """Verify a concrete handler satisfies the KnownStateHandler protocol."""
 
     handler = LocalJSONKnownStateHandler(Path("state.json"))
+    assert isinstance(handler, KnownStateHandler)
+
+
+def test_bolt_handler_is_instance_of_protocol() -> None:
+    """Verify a concrete handler satisfies the KnownStateHandler protocol."""
+
+    handler = BoltDBKnownStateHandler(Path("state.bolt"))
     assert isinstance(handler, KnownStateHandler)
 
 

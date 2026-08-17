@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `BoltDBKnownStateHandler` — a `KnownStateHandler` implementation
+  backed by the [boltdb](https://pypi.org/project/boltdb/) embedded
+  key/value store. Linux-only (the upstream package uses
+  `fcntl.lockf` for file locking).
 - `KnownStateHandler` protocol and its implementations:
-  `LocalJSONKnownStateHandler`, `AzureStorageKnownStateHandler`, and
-  `AWSS3KnownStateHandler`.
+  `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
+  `AzureStorageKnownStateHandler`, and `AWSS3KnownStateHandler`.
 - `.gitmessage` Conventional Commits v1.0.0 commit message template at the
   repo root, plus a `make install-commit-template` Makefile target to
   wire it into git on this clone.
