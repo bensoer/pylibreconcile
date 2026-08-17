@@ -2,7 +2,7 @@ from .aws import AWSS3KnownStateHandler
 from .azure import AzureStorageKnownStateHandler
 from .json_local import LocalJSONKnownStateHandler
 from .protocol import KnownStateHandler
-from .sqlite_local import LocalSQLiteKnownStateHandler
+from .sqlite import SQLiteKnownStateHandler
 from .yaml_local import LocalYAMLKnownStateHandler
 
 __all__ = [
@@ -10,6 +10,6 @@ __all__ = [
     "AzureStorageKnownStateHandler",
     "KnownStateHandler",
     "LocalJSONKnownStateHandler",
-    "LocalSQLiteKnownStateHandler",
     "LocalYAMLKnownStateHandler",
+    "SQLiteKnownStateHandler",
 ]

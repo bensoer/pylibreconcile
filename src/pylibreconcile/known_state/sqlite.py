@@ -7,7 +7,7 @@ from pathlib import Path
 from .protocol import KnownStateHandler
 
 
-class LocalSQLiteKnownStateHandler(KnownStateHandler):
+class SQLiteKnownStateHandler(KnownStateHandler):
     """Known-state handler backed by a local SQLite database file.
 
     A single ``sqlite3.Connection`` is opened in ``__init__`` and held for
