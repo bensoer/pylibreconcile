@@ -17,8 +17,8 @@ stdlib module is sufficient).
 
 Concretely:
 
-1. Implement `LocalSQLiteKnownStateHandler` in
-   `src/pylibreconcile/known_state/sqlite_local.py`.
+1. Implement `SQLiteKnownStateHandler` in
+   `src/pylibreconcile/known_state/sqlite.py`.
 2. Export it from
    [`src/pylibreconcile/known_state/__init__.py`](../../src/pylibreconcile/known_state/__init__.py)
    and the top-level
@@ -282,6 +282,37 @@ statement.
   3.24 (May 2018) — keeping us portable to any Python `>=3.12`
   bundled SQLite.
 
+### D-SQL-8 — Class name `SQLiteKnownStateHandler`, file `sqlite.py` (no `Local` prefix)
+
+**Decision:** the class is `SQLiteKnownStateHandler` and lives in
+`src/pylibreconcile/known_state/sqlite.py`. The `Local` prefix
+that the early-draft versions of this plan used (i.e.
+`LocalSQLiteKnownStateHandler` in `sqlite_local.py`) is dropped.
+
+**Rationale:**
+
+- The four existing backends mix the `Local` prefix for
+  *file-on-disk* handlers (`LocalJSONKnownStateHandler`,
+  `LocalYAMLKnownStateHandler`) and drop it for *remote / cloud*
+  handlers (`AWSS3KnownStateHandler`, `AzureStorageKnownStateHandler`).
+  The `Local` prefix is a hint that the handler is "the on-disk
+  variant of a protocol that has a remote variant" — but SQLite
+  has no remote variant on the project's roadmap, so the
+  prefix is misleading rather than informative.
+- The file naming follows the same convention: `json_local.py`
+  and `yaml_local.py` carry the suffix; `aws.py` and `azure.py`
+  do not. `sqlite.py` (no suffix) reflects that there is no
+  remote-SQLite variant to disambiguate from.
+- The user's review captured this as: *"local has no meaning
+  since sqlite is always local and I have no plans to support
+  some remote option at this time."*
+
+**Effect on existing prose:** all references in this plan to
+`LocalSQLiteKnownStateHandler` and `sqlite_local.py` have been
+renamed accordingly. The PR's commit history includes the rename
+as a follow-up sequence (`refactor!:`, `test:`, `docs:`) layered
+on top of the original five commits.
+
 ## Open decisions left to the implementer (no blocker)
 
 The implementer should follow the conventions in
@@ -301,7 +332,7 @@ Specifically:
 
 ## Implementation plan
 
-### File 1 — `src/pylibreconcile/known_state/sqlite_local.py` (NEW)
+### File 1 — `src/pylibreconcile/known_state/sqlite.py` (NEW)
 
 Mirror the structural shape of
 [`src/pylibreconcile/known_state/json_local.py`](../../src/pylibreconcile/known_state/json_local.py):
@@ -316,7 +347,7 @@ from pathlib import Path
 from .protocol import KnownStateHandler
 
 
-class LocalSQLiteKnownStateHandler(KnownStateHandler):
+class SQLiteKnownStateHandler(KnownStateHandler):
     """Known-state handler backed by a local SQLite database file."""
 
     def __init__(self, path: Path) -> None:
@@ -393,7 +424,7 @@ Add the import and the `__all__` entry:
 ```diff
  from .aws import AWSS3KnownStateHandler
  from .azure import AzureStorageKnownStateHandler
-+from .sqlite_local import LocalSQLiteKnownStateHandler
++from .sqlite import SQLiteKnownStateHandler
  from .json_local import LocalJSONKnownStateHandler
  from .protocol import KnownStateHandler
  from .yaml_local import LocalYAMLKnownStateHandler
@@ -401,7 +432,7 @@ Add the import and the `__all__` entry:
  __all__ = [
      "AWSS3KnownStateHandler",
      "AzureStorageKnownStateHandler",
-+    "LocalSQLiteKnownStateHandler",
++    "SQLiteKnownStateHandler",
      "KnownStateHandler",
      "LocalJSONKnownStateHandler",
      "LocalYAMLKnownStateHandler",
@@ -422,7 +453,7 @@ API consistent with the existing four handlers:
  from .known_state import (
      AWSS3KnownStateHandler,
      AzureStorageKnownStateHandler,
-+    LocalSQLiteKnownStateHandler,
++    SQLiteKnownStateHandler,
      KnownStateHandler,
      LocalJSONKnownStateHandler,
      LocalYAMLKnownStateHandler,
@@ -433,7 +464,7 @@ API consistent with the existing four handlers:
      "AWSS3KnownStateHandler",
      "AzureStorageKnownStateHandler",
      "DesiredState",
-+    "LocalSQLiteKnownStateHandler",
++    "SQLiteKnownStateHandler",
      "KnownStateHandler",
      "LocalJSONKnownStateHandler",
      "LocalYAMLKnownStateHandler",
@@ -446,7 +477,7 @@ API consistent with the existing four handlers:
 Mirror `tests/known_state/local_test.py` line for line, with the
 following substitutions to reflect the SQLite divergence:
 
-- Constructor: `LocalSQLiteKnownStateHandler(tmp_path / "state.db")`
+- Constructor: `SQLiteKnownStateHandler(tmp_path / "state.db")`
   — file extension `.db` to match SQLite convention; the underlying
   SQLite engine treats any extension identically, this is purely a
   readability choice.
@@ -477,7 +508,7 @@ The full test list:
 | `test_has_key` | present + absent |
 | `test_get_all_keys` | multi-key insertion, ordering, content |
 | `test_get_missing_key_raises` | `KeyError` contract |
-| `test_persists_across_instances` | new `LocalSQLiteKnownStateHandler(path)` reads what the previous instance wrote |
+| `test_persists_across_instances` | new `SQLiteKnownStateHandler(path)` reads what the previous instance wrote |
 | `test_nonexistent_file_is_empty` | `get_all_keys() == []`, `has_key(any)` is False after init on a fresh path |
 | `test_schema_is_created_on_init` | introspect via `sqlite_master` — `known_state` table exists with `key TEXT PRIMARY KEY, value TEXT NOT NULL` |
 | `test_values_stored_verbatim` | writes `"hello\nworld\twith\0chars"`, reads it back unchanged, and asserts the on-disk row is the raw string (not base64-encoded) |
@@ -487,7 +518,7 @@ The full test list:
 ### File 5 — `tests/known_state/protocol_test.py` (EDIT, optional)
 
 Extend `test_cloud_handlers_are_subclasses` (or add a sibling test)
-to assert `LocalSQLiteKnownStateHandler` is a subclass of
+to assert `SQLiteKnownStateHandler` is a subclass of
 `KnownStateHandler`. This is purely a structural check; the runtime
 protocol test (`isinstance(handler, KnownStateHandler)`) will also
 exercise it transitively. Recommend the sibling-test form to keep
@@ -533,7 +564,7 @@ the pre-existing YAML omission:
 -  `AWSS3KnownStateHandler`.
 +- `KnownStateHandler` protocol and its implementations:
 +  `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
-+  `LocalSQLiteKnownStateHandler`,
++  `SQLiteKnownStateHandler`,
 +  `AzureStorageKnownStateHandler`, and `AWSS3KnownStateHandler`.
 ```
 
@@ -585,9 +616,9 @@ renamed plan path.
 
 **Option A — strictly-scoped (preferred):**
 
-1. `feat: add LocalSQLiteKnownStateHandler` — `src/pylibreconcile/known_state/sqlite_local.py`,
+1. `feat: add SQLiteKnownStateHandler` — `src/pylibreconcile/known_state/sqlite.py`,
    `src/pylibreconcile/known_state/__init__.py`, `src/pylibreconcile/__init__.py`.
-2. `test: cover LocalSQLiteKnownStateHandler` — `tests/known_state/sqlite_test.py`,
+2. `test: cover SQLiteKnownStateHandler` — `tests/known_state/sqlite_test.py`,
    `tests/known_state/protocol_test.py` (sibling test).
 3. `docs: mention SQLite KnownStateHandler backend in context` —
    `docs/context/glossary.md`, `docs/context/overview.md`.
@@ -601,6 +632,32 @@ If the user prefers fewer commits, merge commit 4 into commit 3
 `CHANGELOG.md`). Either is acceptable per the rule; the rule
 forbids mixing source/tests together but does not strictly separate
 `CHANGELOG.md` from other docs.
+
+**Follow-up — naming cleanup (D-SQL-8).** After the four
+implementation commits above land, three rename commits are
+layered on top so the class ends up as `SQLiteKnownStateHandler`
+in `sqlite.py` rather than `LocalSQLiteKnownStateHandler` in
+`sqlite_local.py` (see D-SQL-8 for the rationale):
+
+1. `refactor!: rename LocalSQLiteKnownStateHandler to SQLiteKnownStateHandler` —
+   `src/pylibreconcile/known_state/sqlite.py` (was `sqlite_local.py`),
+   `src/pylibreconcile/known_state/__init__.py`,
+   `src/pylibreconcile/__init__.py`. Intermediate tree state: tests
+   still import the old name and will fail until the next commit.
+2. `test: rename to SQLiteKnownStateHandler` —
+   `tests/known_state/sqlite_test.py`,
+   `tests/known_state/protocol_test.py`. After this commit the tree
+   is fully green again.
+3. `docs: rename to SQLiteKnownStateHandler in CHANGELOG and plan` —
+   `CHANGELOG.md` and the locked plan itself. Sphinx pages will
+   re-render with the new class name on the next docs build.
+
+The rename is split across three commits so each commit touches
+exactly one layer (`src/` / `tests/` / `docs`+`CHANGELOG`+plan),
+preserving the project's separate-commits rule. The intermediate
+`refactor!:` commit will fail `make test-fast` until commit 2
+lands — that is the documented cost of layer-splitting a
+coordinated rename.
 
 ## Validation sequence
 
@@ -622,7 +679,7 @@ After implementation:
    on the new module, matching the rest of the project
    (`tool.coverage` already runs with `branch = true`).
 7. `make docs` — Sphinx build should pick up the new class via
-   autosummary and emit an `LocalSQLiteKnownStateHandler` page.
+   autosummary and emit an `SQLiteKnownStateHandler` page.
 8. `make all` — final green light.
 
 ## Open questions
@@ -733,7 +790,7 @@ from the new location — no edits required.
 
 The `code-worker` should:
 
-1. Implement `src/pylibreconcile/known_state/sqlite_local.py` per
+1. Implement `src/pylibreconcile/known_state/sqlite.py` per
    the "File 1" spec above.
 2. Wire up the two `__init__.py` re-exports per "File 2" / "File 3".
 3. Add `tests/known_state/sqlite_test.py` per "File 4".
