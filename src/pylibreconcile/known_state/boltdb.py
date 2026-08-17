@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from boltdb import BoltDB
@@ -14,7 +15,8 @@ class BoltDBKnownStateHandler(KnownStateHandler):
 
     Platform: Linux only. The PyPI ``boltdb`` package uses
     ``fcntl.lockf`` for file locking; macOS and Windows are not
-    supported by the upstream package.
+    supported by the upstream package; construction raises
+    `RuntimeError` on non-Linux platforms.
 
     The handler stores all keys in a single named bucket inside the
     file. Concurrent readers are supported by boltdb; only one writer
@@ -28,6 +30,11 @@ class BoltDBKnownStateHandler(KnownStateHandler):
         *,
         bucket_name: str = _DEFAULT_BUCKET,
     ) -> None:
+        if sys.platform != "linux":
+            raise RuntimeError(
+                "BoltDBKnownStateHandler is only supported on Linux; "
+                f"detected platform: {sys.platform!r}"
+            )
         self._path = path
         self._bucket_name = bucket_name
         self._db = BoltDB(str(path))
