@@ -3,6 +3,7 @@ from .azure import AzureStorageKnownStateHandler
 from .boltdb import BoltDBKnownStateHandler
 from .json_local import LocalJSONKnownStateHandler
 from .protocol import KnownStateHandler
+from .sqlite import SQLiteKnownStateHandler
 from .yaml_local import LocalYAMLKnownStateHandler
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "KnownStateHandler",
     "LocalJSONKnownStateHandler",
     "LocalYAMLKnownStateHandler",
+    "SQLiteKnownStateHandler",
 ]
