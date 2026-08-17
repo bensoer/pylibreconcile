@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `BoltDBKnownStateHandler` — a `KnownStateHandler` implementation
+  backed by the [boltdb](https://pypi.org/project/boltdb/) embedded
+  key/value store. Linux-only (the upstream package uses
+  `fcntl.lockf` for file locking).
 - `KnownStateHandler` protocol and its implementations:
   `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
   `SQLiteKnownStateHandler`,
