@@ -111,3 +111,14 @@ def test_custom_bucket_name(tmp_path: Path) -> None:
     assert handler2.get_value("only_in_bucket2") == "value2"
     assert handler1.get_all_keys() == ["only_in_bucket1"]
     assert handler2.get_all_keys() == ["only_in_bucket2"]
+
+
+def test_non_linux_raises(tmp_path: Path, monkeypatch) -> None:
+    """Construction raises RuntimeError on non-Linux platforms."""
+    from types import SimpleNamespace
+
+    import pylibreconcile.known_state.boltdb as boltdb_module
+
+    monkeypatch.setattr(boltdb_module, "sys", SimpleNamespace(platform="darwin"))
+    with pytest.raises(RuntimeError, match="Linux"):
+        BoltDBKnownStateHandler(tmp_path / "state.bolt")
