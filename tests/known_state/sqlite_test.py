@@ -1,6 +1,7 @@
 """Tests for the SQLiteKnownStateHandler."""
 
 import sqlite3
+import sys
 from pathlib import Path
 
 import pytest
@@ -102,3 +103,81 @@ def test_concurrent_writes_do_not_corrupt(tmp_path: Path) -> None:
     assert len(handler.get_all_keys()) == num_keys
     for i in range(num_keys):
         assert handler.get_value(f"key{i}") == f"value{i}"
+
+
+def test_duplicate_path_raises(tmp_path: Path) -> None:
+    path = tmp_path / "state.db"
+    handler_a = SQLiteKnownStateHandler(path)
+    with pytest.raises(RuntimeError) as excinfo:
+        SQLiteKnownStateHandler(path)
+    assert str(path.resolve()) in str(excinfo.value)
+    assert "close()" in str(excinfo.value)
+    handler_a.close()
+
+
+def test_different_paths_create_independent_instances(tmp_path: Path) -> None:
+    path_a = tmp_path / "state_a.db"
+    path_b = tmp_path / "state_b.db"
+    handler_a = SQLiteKnownStateHandler(path_a)
+    handler_b = SQLiteKnownStateHandler(path_b)
+    assert handler_a is not handler_b
+    handler_a.set_value("key", "value_a")
+    handler_b.set_value("key", "value_b")
+    assert handler_a.get_value("key") == "value_a"
+    assert handler_b.get_value("key") == "value_b"
+    handler_a.close()
+    handler_b.close()
+
+
+def test_close_releases_singleton_slot(tmp_path: Path) -> None:
+    path = tmp_path / "state.db"
+    handler_a = SQLiteKnownStateHandler(path)
+    handler_a.set_value("key", "value")
+    handler_a.close()
+    # Now we can create a new handler with the same path
+    handler_b = SQLiteKnownStateHandler(path)
+    assert handler_b.get_value("key") == "value"
+    handler_b.close()
+
+
+def test_context_manager_closes_on_exit(tmp_path: Path) -> None:
+    path = tmp_path / "state.db"
+    with SQLiteKnownStateHandler(path) as handler:
+        handler.set_value("key", "value")
+    # After the context manager, we can create a new handler
+    handler_b = SQLiteKnownStateHandler(path)
+    assert handler_b.get_value("key") == "value"
+    handler_b.close()
+
+
+def test_init_idempotent(tmp_path: Path) -> None:
+    path = tmp_path / "state.db"
+    handler = SQLiteKnownStateHandler(path)
+    # Calling __init__ again should be a no-op (early return)
+    handler.__init__(path)  # should not raise
+    # Verify the handler still works
+    handler.set_value("key", "value")
+    assert handler.get_value("key") == "value"
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Unix chmod(0o444) is not meaningful on Windows"
+)
+def test_init_raises_on_error(tmp_path: Path) -> None:
+    # Make a read-only file to cause an error during table creation
+    path = tmp_path / "state.db"
+    path.touch()
+    path.chmod(0o444)  # read-only
+    with pytest.raises(sqlite3.Error):
+        SQLiteKnownStateHandler(path)
+
+
+def test_close_idempotent_and_registry(tmp_path: Path) -> None:
+    path = tmp_path / "state.db"
+    handler = SQLiteKnownStateHandler(path)
+    # First close: should remove from registry
+    handler.close()
+    # After close, we should be able to create a new handler with the same path
+    SQLiteKnownStateHandler(path)  # should not raise
+    # Second close on the same handler: should not raise and should be a no-op
+    handler.close()  # should not raise
