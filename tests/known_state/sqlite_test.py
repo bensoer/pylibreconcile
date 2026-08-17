@@ -1,56 +1,56 @@
-"""Tests for the LocalSQLiteKnownStateHandler."""
+"""Tests for the SQLiteKnownStateHandler."""
 
 import sqlite3
 from pathlib import Path
 
 import pytest
 
-from pylibreconcile import LocalSQLiteKnownStateHandler
+from pylibreconcile import SQLiteKnownStateHandler
 
 
 def test_set_and_get_value(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     handler.set_value("key1", "value1")
     assert handler.get_value("key1") == "value1"
 
 
 def test_has_key(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     assert not handler.has_key("key1")
     handler.set_value("key1", "value1")
     assert handler.has_key("key1")
 
 
 def test_get_all_keys(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     handler.set_value("a", "1")
     handler.set_value("b", "2")
     assert sorted(handler.get_all_keys()) == ["a", "b"]
 
 
 def test_get_missing_key_raises(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     with pytest.raises(KeyError):
         handler.get_value("missing")
 
 
 def test_persists_across_instances(tmp_path: Path) -> None:
     path = tmp_path / "state.db"
-    LocalSQLiteKnownStateHandler(path).set_value("key1", "value1")
-    reloaded = LocalSQLiteKnownStateHandler(path)
+    SQLiteKnownStateHandler(path).set_value("key1", "value1")
+    reloaded = SQLiteKnownStateHandler(path)
     assert reloaded.get_value("key1") == "value1"
     assert reloaded.has_key("key1")
 
 
 def test_nonexistent_file_is_empty(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     assert handler.get_all_keys() == []
     assert not handler.has_key("any")
 
 
 def test_schema_is_created_on_init(tmp_path: Path) -> None:
     path = tmp_path / "state.db"
-    LocalSQLiteKnownStateHandler(path)
+    SQLiteKnownStateHandler(path)
     with sqlite3.connect(path) as conn:
         cursor = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='known_state'"
@@ -63,7 +63,7 @@ def test_schema_is_created_on_init(tmp_path: Path) -> None:
 
 def test_values_stored_verbatim(tmp_path: Path) -> None:
     path = tmp_path / "state.db"
-    handler = LocalSQLiteKnownStateHandler(path)
+    handler = SQLiteKnownStateHandler(path)
     original = "hello\nworld\twith\0chars"
     handler.set_value("key1", original)
     assert handler.get_value("key1") == original
@@ -75,7 +75,7 @@ def test_values_stored_verbatim(tmp_path: Path) -> None:
 
 
 def test_overwrite_existing_value(tmp_path: Path) -> None:
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     handler.set_value("key1", "first")
     handler.set_value("key1", "second")
     assert handler.get_value("key1") == "second"
@@ -84,7 +84,7 @@ def test_overwrite_existing_value(tmp_path: Path) -> None:
 def test_concurrent_writes_do_not_corrupt(tmp_path: Path) -> None:
     import concurrent.futures
 
-    handler = LocalSQLiteKnownStateHandler(tmp_path / "state.db")
+    handler = SQLiteKnownStateHandler(tmp_path / "state.db")
     num_keys = 100
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
