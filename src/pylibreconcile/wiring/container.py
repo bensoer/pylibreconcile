@@ -44,21 +44,24 @@ class WiringContainer:
     def clear(self) -> None:
         self._wiring.clear()
 
-    def _register_pair(
+    def _set_observed_state_handler(
         self,
         desired_state_type: type[DesiredState],
-        observed_state_handler: ObservedStateHandler | None = None,
-        resource_manager: ResourceManager | None = None,
+        handler: ObservedStateHandler,
     ) -> None:
         existing = self._wiring.get(desired_state_type)
+        resource_manager: ResourceManager | None = None
         if existing is not None:
-            prev_observed, prev_manager = existing
-            if observed_state_handler is None:
-                observed_state_handler = prev_observed
-            if resource_manager is None:
-                resource_manager = prev_manager
-        self.register(
-            desired_state_type=desired_state_type,
-            observed_state_handler=observed_state_handler,
-            resource_manager=resource_manager,
-        )
+            resource_manager = existing[1]
+        self._wiring[desired_state_type] = (handler, resource_manager)
+
+    def _set_resource_manager(
+        self,
+        desired_state_type: type[DesiredState],
+        manager: ResourceManager,
+    ) -> None:
+        existing = self._wiring.get(desired_state_type)
+        observed_state_handler: ObservedStateHandler | None = None
+        if existing is not None:
+            observed_state_handler = existing[0]
+        self._wiring[desired_state_type] = (observed_state_handler, manager)

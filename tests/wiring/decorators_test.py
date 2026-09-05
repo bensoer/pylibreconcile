@@ -174,3 +174,42 @@ def test_decorator_does_not_mutate_class_dict() -> None:
 
     assert "_observed_state_handler_instance" not in MyState.__dict__
     assert "_resource_manager_instance" not in MyState.__dict__
+
+
+def test_end_to_end_both_decorators_with_fields() -> None:
+    observer = FakeObserver()
+    manager = FakeManager()
+
+    @register_observed_state_handler(observer)
+    @register_resource_manager(manager)
+    class ServerDesired(DesiredState):
+        hostname: str
+        port: int
+
+    container = WiringContainer()
+    result = container.get(ServerDesired)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is manager
+
+    instance = ServerDesired(hostname="a", port=80)
+    assert instance.hostname == "a"
+    assert instance.port == 80
+    assert hasattr(ServerDesired, "__dataclass_fields__")
+
+
+def test_end_to_end_inherits_via_mro() -> None:
+    observer = FakeObserver()
+
+    @register_observed_state_handler(observer)
+    class Parent(DesiredState):
+        name: str
+
+    class Child(Parent):
+        pass
+
+    container = WiringContainer()
+    result = container.get(Child)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is None

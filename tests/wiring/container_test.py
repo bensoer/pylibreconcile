@@ -170,13 +170,13 @@ def test_register_overwrites() -> None:
     assert result[1] is manager2
 
 
-def test_register_pair_merges_partial_registrations() -> None:
+def test_set_observed_preserves_manager() -> None:
     container = WiringContainer()
     observer = FakeObserver()
     manager = FakeManager()
 
-    container._register_pair(CustomDesiredState, observed_state_handler=observer)
-    container._register_pair(CustomDesiredState, resource_manager=manager)
+    container._set_observed_state_handler(CustomDesiredState, observer)
+    container._set_resource_manager(CustomDesiredState, manager)
 
     result = container.get(CustomDesiredState)
     assert result is not None
@@ -184,14 +184,18 @@ def test_register_pair_merges_partial_registrations() -> None:
     assert result[1] is manager
 
 
-def test_register_pair_first_call_with_only_one_does_not_raise() -> None:
+def test_set_manager_preserves_observer() -> None:
     container = WiringContainer()
     observer = FakeObserver()
-    container._register_pair(CustomDesiredState, observed_state_handler=observer)
+    manager = FakeManager()
+
+    container._set_resource_manager(CustomDesiredState, manager)
+    container._set_observed_state_handler(CustomDesiredState, observer)
+
     result = container.get(CustomDesiredState)
     assert result is not None
     assert result[0] is observer
-    assert result[1] is None
+    assert result[1] is manager
 
 
 def test_register_base_desired_state() -> None:
