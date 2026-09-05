@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from .core import DesiredState
+from .desired_state import DesiredState
 
 
 class Reconciler:
