@@ -29,19 +29,23 @@ class FakeManager:
 
 
 def test_only_observer_decorator_registers_observer_only() -> None:
-    @register_observed_state_handler(FakeObserver())
+    observer = FakeObserver()
+
+    @register_observed_state_handler(observer)
     class MyState(DesiredState):
         pass
 
     container = WiringContainer()
     result = container.get(MyState)
     assert result is not None
-    assert isinstance(result[0], FakeObserver)
+    assert result[0] is observer
     assert result[1] is None
 
 
 def test_only_manager_decorator_registers_manager_only() -> None:
-    @register_resource_manager(FakeManager())
+    manager = FakeManager()
+
+    @register_resource_manager(manager)
     class MyState(DesiredState):
         pass
 
@@ -49,32 +53,38 @@ def test_only_manager_decorator_registers_manager_only() -> None:
     result = container.get(MyState)
     assert result is not None
     assert result[0] is None
-    assert isinstance(result[1], FakeManager)
+    assert result[1] is manager
 
 
 def test_both_decorators_register_both() -> None:
-    @register_resource_manager(FakeManager())
-    @register_observed_state_handler(FakeObserver())
+    observer = FakeObserver()
+    manager = FakeManager()
+
+    @register_resource_manager(manager)
+    @register_observed_state_handler(observer)
     class MyState(DesiredState):
         pass
 
     container = WiringContainer()
     result = container.get(MyState)
     assert result is not None
-    assert isinstance(result[0], FakeObserver)
-    assert isinstance(result[1], FakeManager)
+    assert result[0] is observer
+    assert result[1] is manager
 
 
 def test_decorator_order_does_not_matter() -> None:
-    # Order 1: observer then manager
-    @register_observed_state_handler(FakeObserver())
-    @register_resource_manager(FakeManager())
+    observer1 = FakeObserver()
+    manager1 = FakeManager()
+    observer2 = FakeObserver()
+    manager2 = FakeManager()
+
+    @register_observed_state_handler(observer1)
+    @register_resource_manager(manager1)
     class MyState1(DesiredState):
         pass
 
-    # Order 2: manager then observer
-    @register_resource_manager(FakeManager())
-    @register_observed_state_handler(FakeObserver())
+    @register_resource_manager(manager2)
+    @register_observed_state_handler(observer2)
     class MyState2(DesiredState):
         pass
 
@@ -84,10 +94,10 @@ def test_decorator_order_does_not_matter() -> None:
 
     assert result1 is not None
     assert result2 is not None
-    assert isinstance(result1[0], FakeObserver)
-    assert isinstance(result1[1], FakeManager)
-    assert isinstance(result2[0], FakeObserver)
-    assert isinstance(result2[1], FakeManager)
+    assert result1[0] is observer1
+    assert result1[1] is manager1
+    assert result2[0] is observer2
+    assert result2[1] is manager2
 
 
 def test_undecorated_subclass_is_not_registered() -> None:
@@ -99,19 +109,13 @@ def test_undecorated_subclass_is_not_registered() -> None:
 
 
 def test_decorator_returns_class_unchanged() -> None:
-    original_state = DesiredState
-
     @register_observed_state_handler(FakeObserver())
     class MyState(DesiredState):
         pass
 
-    assert MyState is not original_state
-    # But it is still a subclass of DesiredState
     assert issubclass(MyState, DesiredState)
-    # And it is still instantiable
     instance = MyState()
     assert isinstance(instance, MyState)
-    # And it is still a dataclass (since DesiredState makes it one)
     assert hasattr(MyState, "__dataclass_fields__")
 
 
@@ -124,7 +128,6 @@ def test_decorator_does_not_add_dataclass_fields() -> None:
     class DecoratedState(BaseState):
         field2: str = ""
 
-    # The decorated class should have the same fields as the base plus its own
     base_fields = {f.name for f in fields(BaseState)}
     decorated_fields = {f.name for f in fields(DecoratedState)}
     assert base_fields == {"field1"}
@@ -137,27 +140,30 @@ class MyStateForDecoratorTest(DesiredState):
 
 
 def test_decorator_with_explicit_dataclass_still_works() -> None:
-    decorated = register_observed_state_handler(FakeObserver())(MyStateForDecoratorTest)
+    observer = FakeObserver()
+    decorated = register_observed_state_handler(observer)(MyStateForDecoratorTest)
 
     container = WiringContainer()
     result = container.get(decorated)
     assert result is not None
-    assert isinstance(result[0], FakeObserver)
+    assert result[0] is observer
     assert result[1] is None
 
 
 def test_decorator_with_inheritance_chain() -> None:
-    @register_observed_state_handler(FakeObserver())
+    observer = FakeObserver()
+
+    @register_observed_state_handler(observer)
     class ParentState(DesiredState):
         pass
 
     class ChildState(ParentState):
-        pass  # Not decorated
+        pass
 
     container = WiringContainer()
     result = container.get(ChildState)
     assert result is not None
-    assert isinstance(result[0], FakeObserver)
+    assert result[0] is observer
     assert result[1] is None
 
 
@@ -166,24 +172,5 @@ def test_decorator_does_not_mutate_class_dict() -> None:
     class MyState(DesiredState):
         pass
 
-    # The class dict should not have any attributes added by the decorator
-    # that are related to the wiring (like _observed_state_handler_instance)
-    # We can check for common attribute names that the decorator might add.
-    assert not hasattr(MyState, "_observed_state_handler_instance")
-    assert not hasattr(MyState, "_resource_manager_instance")
-
-    # Also, the class dict should not have any new attributes that start with _
-    # that are related to our decorator (but we don't want to be too strict)
-    # Instead, we can check that the class dict is the same as a non-decorated
-    # class in terms of wiring-related attributes.
-    class PlainState(DesiredState):
-        pass
-
-    # The only difference should be that MyState is not PlainState (different identity)
-    # and that MyState has been decorated (but we don't have an easy way to check that
-    # without knowing the internal implementation). However, we can check that
-    # the decorator did not add any attributes that we know it shouldn't.
-    # Since we don't know the exact internal, we can at least check for the two
-    # attributes that we know the decorator might be tempted to add (but shouldn't).
     assert "_observed_state_handler_instance" not in MyState.__dict__
     assert "_resource_manager_instance" not in MyState.__dict__

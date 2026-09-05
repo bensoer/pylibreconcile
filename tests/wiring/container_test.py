@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 
 from pylibreconcile import DesiredState, WiringContainer
-from pylibreconcile.desired_state import DesiredState as BaseDesiredState
 
 
 class FakeObserver:
@@ -25,54 +24,77 @@ class FakeManager:
         pass
 
 
+class CustomDesiredState(DesiredState):
+    pass
+
+
 def test_singleton_returns_same_instance() -> None:
+    container = WiringContainer()
     assert WiringContainer() is WiringContainer()
+    assert hasattr(container, "_wiring")
+    assert container._wiring == {}
 
 
 def test_clear_resets_registry() -> None:
     container = WiringContainer()
-    container.register(BaseDesiredState, FakeObserver(), FakeManager())
-    assert container.get(BaseDesiredState) is not None
+    observer = FakeObserver()
+    container.register(CustomDesiredState, observed_state_handler=observer)
+    assert container.get(CustomDesiredState) is not None
     container.clear()
-    assert container.get(BaseDesiredState) is None
+    assert container.get(CustomDesiredState) is None
 
 
 def test_register_with_observer_only() -> None:
     container = WiringContainer()
-    # Should not raise
-    container.register(BaseDesiredState, observed_state_handler=FakeObserver())
+    observer = FakeObserver()
+    container.register(CustomDesiredState, observed_state_handler=observer)
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is None
 
 
 def test_register_with_manager_only() -> None:
     container = WiringContainer()
-    # Should not raise
-    container.register(BaseDesiredState, resource_manager=FakeManager())
+    manager = FakeManager()
+    container.register(CustomDesiredState, resource_manager=manager)
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is None
+    assert result[1] is manager
 
 
 def test_register_with_both() -> None:
     container = WiringContainer()
-    # Should not raise
-    container.register(BaseDesiredState, FakeObserver(), FakeManager())
+    observer = FakeObserver()
+    manager = FakeManager()
+    container.register(CustomDesiredState, observer, manager)
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is manager
 
 
 def test_register_with_neither_raises() -> None:
     container = WiringContainer()
 
-    class TestState(DesiredState):
-        pass
-
     with pytest.raises(ValueError, match="at least one of") as excinfo:
-        container.register(TestState, None, None)
-    assert "at least one of" in str(excinfo.value)
-    assert "TestState" in str(excinfo.value)
+        container.register(CustomDesiredState, None, None)
+    assert "CustomDesiredState" in str(excinfo.value)
+
+
+def test_register_with_no_args_raises() -> None:
+    container = WiringContainer()
+    with pytest.raises(ValueError, match="at least one of"):
+        container.register(CustomDesiredState)
 
 
 def test_get_returns_registered_pair() -> None:
     container = WiringContainer()
     observer = FakeObserver()
     manager = FakeManager()
-    container.register(BaseDesiredState, observer, manager)
-    result = container.get(BaseDesiredState)
+    container.register(CustomDesiredState, observer, manager)
+    result = container.get(CustomDesiredState)
     assert result is not None
     assert result[0] is observer
     assert result[1] is manager
@@ -80,11 +102,12 @@ def test_get_returns_registered_pair() -> None:
 
 def test_get_returns_none_for_unregistered() -> None:
     container = WiringContainer()
-    assert container.get(BaseDesiredState) is None
+    result = container.get(CustomDesiredState)
+    assert result is None
 
 
 def test_get_walks_mro() -> None:
-    class A(BaseDesiredState):
+    class A(CustomDesiredState):
         pass
 
     class B(A):
@@ -95,7 +118,6 @@ def test_get_walks_mro() -> None:
     manager = FakeManager()
     container.register(A, observer, manager)
 
-    # B is not registered, but should get A's wiring via MRO
     result = container.get(B)
     assert result is not None
     assert result[0] is observer
@@ -103,7 +125,7 @@ def test_get_walks_mro() -> None:
 
 
 def test_get_walks_mro_returns_closest_first() -> None:
-    class A(BaseDesiredState):
+    class A(CustomDesiredState):
         pass
 
     class B(A):
@@ -120,18 +142,16 @@ def test_get_walks_mro_returns_closest_first() -> None:
 
     result = container.get(B)
     assert result is not None
-    # Should return B's wiring, not A's
     assert result[0] is observer_b
     assert result[1] is manager_b
 
 
 def test_clear_then_register_works() -> None:
     container = WiringContainer()
-    container.register(BaseDesiredState, FakeObserver(), FakeManager())
+    container.register(CustomDesiredState, FakeObserver(), FakeManager())
     container.clear()
-    # Register again after clear
-    container.register(BaseDesiredState, FakeObserver(), FakeManager())
-    assert container.get(BaseDesiredState) is not None
+    container.register(CustomDesiredState, FakeObserver(), FakeManager())
+    assert container.get(CustomDesiredState) is not None
 
 
 def test_register_overwrites() -> None:
@@ -141,10 +161,10 @@ def test_register_overwrites() -> None:
     observer2 = FakeObserver()
     manager2 = FakeManager()
 
-    container.register(BaseDesiredState, observer1, manager1)
-    container.register(BaseDesiredState, observer2, manager2)
+    container.register(CustomDesiredState, observer1, manager1)
+    container.register(CustomDesiredState, observer2, manager2)
 
-    result = container.get(BaseDesiredState)
+    result = container.get(CustomDesiredState)
     assert result is not None
     assert result[0] is observer2
     assert result[1] is manager2
@@ -155,12 +175,10 @@ def test_register_pair_merges_partial_registrations() -> None:
     observer = FakeObserver()
     manager = FakeManager()
 
-    # First call with only observer
-    container._register_pair(BaseDesiredState, observed_state_handler=observer)
-    # Second call with only manager
-    container._register_pair(BaseDesiredState, resource_manager=manager)
+    container._register_pair(CustomDesiredState, observed_state_handler=observer)
+    container._register_pair(CustomDesiredState, resource_manager=manager)
 
-    result = container.get(BaseDesiredState)
+    result = container.get(CustomDesiredState)
     assert result is not None
     assert result[0] is observer
     assert result[1] is manager
@@ -169,10 +187,18 @@ def test_register_pair_merges_partial_registrations() -> None:
 def test_register_pair_first_call_with_only_one_does_not_raise() -> None:
     container = WiringContainer()
     observer = FakeObserver()
-    # This should not raise because we are using _register_pair with only one set
-    container._register_pair(BaseDesiredState, observed_state_handler=observer)
-    # Now get should return (observer, None)
-    result = container.get(BaseDesiredState)
+    container._register_pair(CustomDesiredState, observed_state_handler=observer)
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is None
+
+
+def test_register_base_desired_state() -> None:
+    container = WiringContainer()
+    observer = FakeObserver()
+    container.register(DesiredState, observed_state_handler=observer)
+    result = container.get(DesiredState)
     assert result is not None
     assert result[0] is observer
     assert result[1] is None
