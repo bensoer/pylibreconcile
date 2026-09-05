@@ -196,6 +196,7 @@ class ServerDesired(DesiredState):
 
 
 # Hand the Desired States and Known State to the library
+# Optional: drift_policy=DriftPolicy.FLAG, import_policy=ImportPolicy.WARN
 reconciler = Reconciler(
     known_state_handler=LocalJSONKnownStateHandler(Path("state.json")),
 )

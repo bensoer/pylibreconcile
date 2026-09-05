@@ -129,6 +129,7 @@ ignore = [
     "S101",   # Use of assert detected (fine in tests)
     "E501",   # line too long (handled by formatter)
     "B008",   # function call in default argument (common pattern)
+    "SIM108", # ternary operator required conflicts with standards://python/syntax (NEVER use ternary)
 ]
 
 [tool.ruff.lint.per-file-ignores]

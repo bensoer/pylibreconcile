@@ -9,6 +9,7 @@ from .known_state import (
     LocalYAMLKnownStateHandler,
     SQLiteKnownStateHandler,
 )
+from .policy import Configuration, DriftPolicy, ImportPolicy
 from .reconciler import Reconciler
 from .wiring import (
     WiringContainer,
@@ -22,7 +23,10 @@ __all__ = [
     "BoltDBKnownStateHandler",
     "Change",
     "ChangeType",
+    "Configuration",
     "DesiredState",
+    "DriftPolicy",
+    "ImportPolicy",
     "KnownStateHandler",
     "LocalJSONKnownStateHandler",
     "LocalYAMLKnownStateHandler",

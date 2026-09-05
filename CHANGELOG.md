@@ -25,6 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.gitmessage` Conventional Commits v1.0.0 commit message template at the
   repo root, plus a `make install-commit-template` Makefile target to
   wire it into git on this clone.
+- `DriftPolicy` enum (`FLAG` / `RECREATE` / `ABSTAIN`) and
+  `ImportPolicy` enum (`AUTO` / `WARN` / `REJECT` / `SKIP`).
+- `Reconciler` constructor now accepts `known_state_handler`
+  (required), `drift_policy` (default `FLAG`), and `import_policy`
+  (default `WARN`), and validates in-scope `WiringContainer`
+  wiring at construction time.
+- `Reconciler.reconcile()` accepts per-call `drift_policy` /
+  `import_policy` overrides that are validated against wiring.
+- `Change.action_performed: bool = True` field — distinguishes
+  drift-was-flagged from drift-was-recreated.
 
 ### Changed
 
