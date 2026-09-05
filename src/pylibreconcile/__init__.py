@@ -7,6 +7,7 @@ from .known_state import (
     KnownStateHandler,
     LocalJSONKnownStateHandler,
     LocalYAMLKnownStateHandler,
+    SQLiteKnownStateHandler,
 )
 from .reconciler import Reconciler
 from .wiring import (
@@ -26,6 +27,7 @@ __all__ = [
     "LocalJSONKnownStateHandler",
     "LocalYAMLKnownStateHandler",
     "Reconciler",
+    "SQLiteKnownStateHandler",
     "WiringContainer",
     "register_observed_state_handler",
     "register_resource_manager",

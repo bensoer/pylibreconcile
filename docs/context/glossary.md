@@ -76,8 +76,8 @@ Terminology used in [`overview.md`](overview.md) and across the
 ## Plumbing / wiring
 
 - **KnownStateHandler** — the Protocol that backs Known State
-  persistence. Already implemented with local JSON / YAML / Azure
-  Blob / AWS S3 backends.
+  persistence. Already implemented with local JSON / YAML / SQLite
+  / Azure Blob / AWS S3 backends.
 - **ObservedStateManager** — per-`DesiredState`-type component for
   the *observation / comparison* side of Observed State:
   `is_match(desired, known)`, `exists(...)`, and other read-only

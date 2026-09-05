@@ -8,6 +8,7 @@ from pylibreconcile import (
     BoltDBKnownStateHandler,
     KnownStateHandler,
     LocalJSONKnownStateHandler,
+    SQLiteKnownStateHandler,
 )
 
 
@@ -60,3 +61,8 @@ def test_cloud_handlers_are_subclasses() -> None:
     assert issubclass(AzureStorageKnownStateHandler, KnownStateHandler)
     assert issubclass(AWSS3KnownStateHandler, KnownStateHandler)
     assert issubclass(LocalJSONKnownStateHandler, KnownStateHandler)
+
+
+def test_sqlite_handler_is_subclass() -> None:
+    """Verify the SQLiteKnownStateHandler is a subclass of KnownStateHandler."""
+    assert issubclass(SQLiteKnownStateHandler, KnownStateHandler)

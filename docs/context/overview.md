@@ -26,7 +26,7 @@ The library's three states are all **wiring points**:
 - **Observed State** — fresh lookups against the real world (API, DB).
 - **Known State** — durable record of what has been written, stored
   via `KnownStateHandler` (already implemented with local JSON /
-  YAML, Azure Blob, and AWS S3 backends).
+  YAML / SQLite / Azure Blob / AWS S3 backends).
 
 ## Audience
 
@@ -47,7 +47,7 @@ per `DesiredState` type, an [`ObservedStateManager`](glossary.md#plumbing--wirin
 (read / comparison) and a [`ResourceManager`](glossary.md#plumbing--wiring)
 (write / action). Known State storage is picked at construction time
 from the existing `KnownStateHandler` backends (local JSON / YAML /
-Azure Blob / AWS S3).
+SQLite / Azure Blob / AWS S3).
 
 The library is for situations where this three-state, three-wiring-
 point model fits. If a use case needs bespoke reconciliation logic
@@ -90,7 +90,7 @@ Three first-class states — **Desired State**, **Observed State**,
 - **Known State** is the durable record of what the Reconciler
   believes it has written. Persisted across passes via
   `KnownStateHandler` — currently a key → string-value store with
-  local JSON / YAML / Azure Blob / AWS S3 backends. The *only*
+  local JSON / YAML / SQLite / Azure Blob / AWS S3 backends. The *only*
   stateful piece of the library — "the stateful database in an
   otherwise stateless library."
 

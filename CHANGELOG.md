@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `fcntl.lockf` for file locking).
 - `KnownStateHandler` protocol and its implementations:
   `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
+  `SQLiteKnownStateHandler`,
   `AzureStorageKnownStateHandler`, and `AWSS3KnownStateHandler`.
 - `WiringContainer` — singleton DI container for `DesiredState`-to-handlers
   wiring, with MRO-aware `get()` lookup.
