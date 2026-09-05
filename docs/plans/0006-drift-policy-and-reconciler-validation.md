@@ -363,19 +363,99 @@ class ImportPolicy(Enum):
   D-Q9 verbatim (`auto` / `warn` / `reject` / `skip`). Uppercased
   to match the existing `ChangeType` enum's convention.
 
+### 1b. `Configuration` dataclass (policy bundle)
+
+Lives in `src/pylibreconcile/policy.py` alongside the two enums.
+This dataclass bundles `DriftPolicy` and `ImportPolicy` into a single
+parameter, so future expansion (retry settings, concurrency,
+telemetry flags) adds fields to one object rather than individual
+`Reconciler` parameters.
+
+```python
+@dataclass(frozen=True)
+class Configuration:
+    """Reconciler policy settings.
+
+    All fields default to ``None``; call ``with_defaults()`` to
+    resolve ``None`` fields to their system defaults. Pass per-call
+    ``Configuration`` objects with only the fields you want to
+    override set — ``applied_over`` merges non-``None`` fields
+    over a base ``Configuration``.
+    """
+
+    drift_policy: DriftPolicy | None = None
+    import_policy: ImportPolicy | None = None
+
+    def with_defaults(self) -> Configuration:
+        """Return a new ``Configuration`` with ``None`` fields replaced by
+        their documented defaults (``DriftPolicy.FLAG``, ``ImportPolicy.WARN``).
+        """
+        return Configuration(
+            drift_policy=self.drift_policy if self.drift_policy is not None else DriftPolicy.FLAG,
+            import_policy=self.import_policy
+            if self.import_policy is not None
+            else ImportPolicy.WARN,
+        )
+
+    def applied_over(self, base: Configuration) -> Configuration:
+        """Return a new ``Configuration`` where every **non-None** field in
+        ``self`` replaces the corresponding field in ``base``.
+
+        Used at ``reconcile()`` time: the per-call ``Configuration``
+        overrides individual fields while inheriting the rest from
+        the constructor's resolved ``Configuration``.
+        """
+        return Configuration(
+            drift_policy=self.drift_policy if self.drift_policy is not None else base.drift_policy,
+            import_policy=self.import_policy
+            if self.import_policy is not None
+            else base.import_policy,
+        )
+```
+
+**Usage pattern:**
+
+```python
+# Constructor — all-None resolves to FLAG + WARN
+r = Reconciler(states, handler)
+
+# Constructor — explicit policies
+r = Reconciler(
+    states,
+    handler,
+    config=Configuration(
+        drift_policy=DriftPolicy.RECREATE,
+        import_policy=ImportPolicy.SKIP,
+    ),
+)
+
+# Per-call override — only override drift, inherit import from constructor
+r.reconcile(config=Configuration(drift_policy=DriftPolicy.ABSTAIN))
+```
+
+**Why `None`-with-defaults rather than concrete-defaults?** Per-call
+overrides merge: when the caller sets only `drift_policy` on a
+per-call `Configuration`, `import_policy` stays `None` so
+`applied_over` falls back to the constructor's value. If the
+dataclass had concrete defaults (`FLAG` / `WARN`), every per-call
+override would implicitly reset every unset field to the system
+default, even when the constructor had chosen something different.
+
 ### 2. `Reconciler` constructor + validation
+
+`drift_policy` / `import_policy` become a single ``Configuration``
+parameter (scales to future knobs like retry, concurrency, telemetry
+without adding constructor params).
 
 ```python
 # src/pylibreconcile/reconciler.py
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from typing import Optional
+from collections.abc import Iterable
 
-from .change import Change
 from .desired_state import DesiredState
 from .known_state import KnownStateHandler
-from .policy import DriftPolicy, ImportPolicy
+from .policy import Configuration, DriftPolicy, ImportPolicy
 from .wiring import WiringContainer
 
 
@@ -384,13 +464,11 @@ class Reconciler:
         self,
         desired_states: Iterable[DesiredState],
         known_state_handler: KnownStateHandler,
-        drift_policy: DriftPolicy = DriftPolicy.FLAG,
-        import_policy: ImportPolicy = ImportPolicy.WARN,
+        config: Configuration = Configuration(),
     ) -> None:
         self._desired_states = list(desired_states)
         self._known_state_handler = known_state_handler
-        self._drift_policy = drift_policy
-        self._import_policy = import_policy
+        self._config = config.with_defaults()
         self._validate_wiring_for_settings()
 
     def _validate_wiring_for_settings(self) -> None:
@@ -418,7 +496,7 @@ class Reconciler:
             if observed is None and manager is None:
                 missing.append(desired_state_type.__name__)
                 continue
-            if self._drift_policy is DriftPolicy.RECREATE and manager is None:
+            if self._config.drift_policy is DriftPolicy.RECREATE and manager is None:
                 recreate_without_manager.append(desired_state_type.__name__)
         if missing or recreate_without_manager:
             parts: list[str] = []
@@ -437,33 +515,27 @@ class Reconciler:
 
     def reconcile(
         self,
-        drift_policy: Optional[DriftPolicy] = None,
-        import_policy: Optional[ImportPolicy] = None,
+        config: Configuration | None = None,
     ) -> list[DesiredState]:
         """One-pass reconcile. Body is a stub pending Seed 6.
 
-        Per-call policy overrides take precedence over the constructor
-        defaults; they are validated against the registered wiring here
-        (same rules as ``_validate_wiring_for_settings``) and stored on
-        the instance for the future reconcile loop to consume.
+        Per-call ``Configuration`` overrides the constructor's config:
+        non-``None`` fields override, the rest are inherited from the
+        constructor's resolved ``Configuration``.
         """
-        effective_drift = drift_policy if drift_policy is not None else self._drift_policy
-        effective_import = import_policy if import_policy is not None else self._import_policy
-        self._effective_drift_policy = effective_drift
-        self._effective_import_policy = effective_import
-        self._validate_effective_policy_for_wiring(effective_drift)
+        if config is None:
+            effective = self._config
+        else:
+            effective = config.applied_over(self._config)
+        self._effective_config = effective
+        self._validate_effective_policy_for_wiring(effective.drift_policy)
         return list(self._desired_states)
 
     def _validate_effective_policy_for_wiring(
         self,
         effective_drift: DriftPolicy,
     ) -> None:
-        """Apply the same DriftPolicy.RECREATE check on a per-call override.
-
-        A caller passing ``drift_policy=DriftPolicy.RECREATE`` to
-        ``reconcile()`` (overriding a more permissive constructor default)
-        must still have the wiring to support it.
-        """
+        """Apply the same DriftPolicy.RECREATE check on a per-call override."""
         if effective_drift is not DriftPolicy.RECREATE:
             return
         unique_types: set[type[DesiredState]] = {type(d) for d in self._desired_states}
@@ -484,51 +556,15 @@ class Reconciler:
 
 **Notes:**
 
-- The validation method only walks `WiringContainer().get(type)`.
-  No `Mapping` import is needed because the unique-type set is
-  built with set comprehension; the `Mapping` reference in the
-  import block above is **wrong** and should be removed. The
-  corrected import block:
-
-  ```python
-  from collections.abc import Iterable
-  from typing import Optional
-  ```
-
-- Both the constructor's validation and `reconcile()`'s per-call
-  override validation follow the same rule: `RECREATE` requires
-  `ResourceManager` for every unique type in scope. The
-  constructor validates the constructor's policy; `reconcile()`
-  validates the effective policy (which may be an override).
-  This catches the "caller defaults to `FLAG` then upgrades to
-  `RECREATE` per-call without re-checking wiring" mistake.
-
-- Validation checks "no wiring at all" (registry returns `None` or
-  both slots `None`) as an error regardless of policy. A caller
-  passing desired states with no wiring has made a mistake — the
-  reconciler cannot observe or mutate them. The error is grouped
-  with the `RECREATE` errors into a single `ValueError` for ease
-  of debugging.
-
-- `__init__` signature uses `Iterable[DesiredState]` (matches the
-  existing signature shape; not breaking per se, but adding a
-  required positional after `desired_states` would be — the new
-  required param `known_state_handler` is the second positional
-  by convention. This IS a constructor breaking change; it is
-  the natural one because `Reconciler` cannot function without
-  knowing where Known State is stored, and the existing
-  one-arg-`__init__` was a stub anyway).
-
-- `DriftPolicy | None` / `ImportPolicy | None` per the
-  project's ruff `UP` (pyupgrade) rule in `pyproject.toml:118`
-  (which enforces pipe syntax). The `standards://python/syntax`
-  rule preferring `Optional[...]` is overridden by the repo's
-  tooling — the existing `WiringContainer` already uses pipe
-  syntax. New code matches the existing codebase convention.
-
-- The `reconcile()` body stays a stub. The per-call kwargs are
-  accepted and stored; the return value is still the input
-  list. Seed 6 replaces this body.
+- ``Configuration()`` (all-``None``) in the constructor resolves to
+  ``FLAG`` + ``WARN`` via ``with_defaults()``.
+- ``reconcile(config=Configuration(drift_policy=DriftPolicy.ABSTAIN))``
+  overrides only ``drift_policy``; ``import_policy`` inherits from
+  the constructor's config via ``applied_over``.
+- Imports: ``Configuration`` from ``.policy``. No ``Mapping`` or
+  ``Optional`` imports needed.
+- ``DriftPolicy | None`` per the repo's ruff ``UP`` (pyupgrade) rule
+  in ``pyproject.toml:118``.
 
 ### 3. `Change.action_performed` field
 
@@ -588,7 +624,7 @@ from .known_state import (
     LocalYAMLKnownStateHandler,
     SQLiteKnownStateHandler,
 )
-from .policy import DriftPolicy, ImportPolicy
+from .policy import Configuration, DriftPolicy, ImportPolicy
 from .reconciler import Reconciler
 from .wiring import (
     WiringContainer,
@@ -602,6 +638,7 @@ __all__ = [
     "BoltDBKnownStateHandler",
     "Change",
     "ChangeType",
+    "Configuration",
     "DesiredState",
     "DriftPolicy",
     "ImportPolicy",
@@ -738,24 +775,32 @@ class ImportPolicy(Enum):
     SKIP = "SKIP"
 
 
+# Configuration bundle
+@dataclass(frozen=True)
+class Configuration:
+    drift_policy: DriftPolicy | None = None
+    import_policy: ImportPolicy | None = None
+
+    def with_defaults(self) -> Configuration: ...
+    def applied_over(self, base: Configuration) -> Configuration: ...
+
+
 # Reconciler
 class Reconciler:
     def __init__(
         self,
         desired_states: Iterable[DesiredState],
         known_state_handler: KnownStateHandler,
-        drift_policy: DriftPolicy = DriftPolicy.FLAG,
-        import_policy: ImportPolicy = ImportPolicy.WARN,
+        config: Configuration = Configuration(),
     ) -> None:
-        # validates wiring on construction
+        # resolves None fields via with_defaults(), validates wiring
         ...
 
     def reconcile(
         self,
-        drift_policy: Optional[DriftPolicy] = None,
-        import_policy: Optional[ImportPolicy] = None,
+        config: Configuration | None = None,
     ) -> list[DesiredState]:
-        # stub body; Seed 6 replaces
+        # stub body; non-None config merges via applied_over()
         ...
 
 
