@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import pytest
-
-from pylibreconcile import WiringContainer, DesiredState
+from pylibreconcile import DesiredState, WiringContainer
 from pylibreconcile.wiring.decorators import (
     register_observed_state_handler,
     register_resource_manager,
 )
-from pylibreconcile.observed_state import ObservedStateHandler
-from pylibreconcile.resource_manager import ResourceManager
 
 
 class FakeObserver:

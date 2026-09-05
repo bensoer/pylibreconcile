@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from pylibreconcile import WiringContainer, DesiredState
+from pylibreconcile import DesiredState, WiringContainer
 from pylibreconcile.desired_state import DesiredState as BaseDesiredState
-from pylibreconcile.observed_state import ObservedStateHandler
-from pylibreconcile.resource_manager import ResourceManager
 
 
 class FakeObserver:
@@ -59,10 +57,11 @@ def test_register_with_both() -> None:
 
 def test_register_with_neither_raises() -> None:
     container = WiringContainer()
+
     class TestState(DesiredState):
         pass
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError, match="at least one of") as excinfo:
         container.register(TestState, None, None)
     assert "at least one of" in str(excinfo.value)
     assert "TestState" in str(excinfo.value)

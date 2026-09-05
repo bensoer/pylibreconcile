@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import pytest
 from dataclasses import dataclass, fields
 
-from pylibreconcile import WiringContainer, DesiredState
+from pylibreconcile import DesiredState, WiringContainer
 from pylibreconcile.wiring.decorators import (
     register_observed_state_handler,
     register_resource_manager,
 )
-from pylibreconcile.observed_state import ObservedStateHandler
-from pylibreconcile.resource_manager import ResourceManager
 
 
 class FakeObserver:
@@ -102,14 +99,13 @@ def test_undecorated_subclass_is_not_registered() -> None:
 
 
 def test_decorator_returns_class_unchanged() -> None:
-    Original = DesiredState
+    original_state = DesiredState
 
     @register_observed_state_handler(FakeObserver())
     class MyState(DesiredState):
         pass
 
-    # The decorator returns the same class
-    assert MyState is not Original
+    assert MyState is not original_state
     # But it is still a subclass of DesiredState
     assert issubclass(MyState, DesiredState)
     # And it is still instantiable
@@ -175,6 +171,7 @@ def test_decorator_does_not_mutate_class_dict() -> None:
     # We can check for common attribute names that the decorator might add.
     assert not hasattr(MyState, "_observed_state_handler_instance")
     assert not hasattr(MyState, "_resource_manager_instance")
+
     # Also, the class dict should not have any new attributes that start with _
     # that are related to our decorator (but we don't want to be too strict)
     # Instead, we can check that the class dict is the same as a non-decorated
