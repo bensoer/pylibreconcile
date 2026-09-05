@@ -198,6 +198,38 @@ def test_set_manager_preserves_observer() -> None:
     assert result[1] is manager
 
 
+def test_set_observed_then_overwrite_observed() -> None:
+    container = WiringContainer()
+    observer1 = FakeObserver()
+    observer2 = FakeObserver()
+    manager = FakeManager()
+
+    container._set_resource_manager(CustomDesiredState, manager)
+    container._set_observed_state_handler(CustomDesiredState, observer1)
+    container._set_observed_state_handler(CustomDesiredState, observer2)
+
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is observer2
+    assert result[1] is manager
+
+
+def test_set_manager_then_overwrite_manager() -> None:
+    container = WiringContainer()
+    observer = FakeObserver()
+    manager1 = FakeManager()
+    manager2 = FakeManager()
+
+    container._set_observed_state_handler(CustomDesiredState, observer)
+    container._set_resource_manager(CustomDesiredState, manager1)
+    container._set_resource_manager(CustomDesiredState, manager2)
+
+    result = container.get(CustomDesiredState)
+    assert result is not None
+    assert result[0] is observer
+    assert result[1] is manager2
+
+
 def test_register_base_desired_state() -> None:
     container = WiringContainer()
     observer = FakeObserver()
