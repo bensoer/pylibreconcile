@@ -36,9 +36,9 @@ class WiringContainer:
         self,
         desired_state_type: type[DesiredState],
     ) -> tuple[ObservedStateHandler | None, ResourceManager | None] | None:
-        for klass in desired_state_type.__mro__:
-            if klass in self._wiring:
-                return self._wiring[klass]
+        for mro_cls in desired_state_type.__mro__:
+            if mro_cls in self._wiring:
+                return self._wiring[mro_cls]
         return None
 
     def clear(self) -> None:
