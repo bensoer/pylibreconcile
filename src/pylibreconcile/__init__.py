@@ -9,6 +9,7 @@ from .known_state import (
     LocalYAMLKnownStateHandler,
     SQLiteKnownStateHandler,
 )
+from .policy import DriftPolicy, ImportPolicy
 from .reconciler import Reconciler
 from .wiring import (
     WiringContainer,
@@ -23,6 +24,8 @@ __all__ = [
     "Change",
     "ChangeType",
     "DesiredState",
+    "DriftPolicy",
+    "ImportPolicy",
     "KnownStateHandler",
     "LocalJSONKnownStateHandler",
     "LocalYAMLKnownStateHandler",
