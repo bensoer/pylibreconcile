@@ -41,9 +41,6 @@ class WiringContainer:
                 return self._wiring[mro_cls]
         return None
 
-    def clear(self) -> None:
-        self._wiring.clear()
-
     def _set_observed_state_handler(
         self,
         desired_state_type: type[DesiredState],

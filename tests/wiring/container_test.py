@@ -40,8 +40,9 @@ def test_clear_resets_registry() -> None:
     observer = FakeObserver()
     container.register(CustomDesiredState, observed_state_handler=observer)
     assert container.get(CustomDesiredState) is not None
-    container.clear()
-    assert container.get(CustomDesiredState) is None
+    WiringContainer._instance = None
+    fresh = WiringContainer()
+    assert fresh.get(CustomDesiredState) is None
 
 
 def test_register_with_observer_only() -> None:
@@ -149,9 +150,10 @@ def test_get_walks_mro_returns_closest_first() -> None:
 def test_clear_then_register_works() -> None:
     container = WiringContainer()
     container.register(CustomDesiredState, FakeObserver(), FakeManager())
-    container.clear()
-    container.register(CustomDesiredState, FakeObserver(), FakeManager())
-    assert container.get(CustomDesiredState) is not None
+    WiringContainer._instance = None
+    fresh = WiringContainer()
+    fresh.register(CustomDesiredState, FakeObserver(), FakeManager())
+    assert fresh.get(CustomDesiredState) is not None
 
 
 def test_register_overwrites() -> None:

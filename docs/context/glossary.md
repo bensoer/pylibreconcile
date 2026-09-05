@@ -104,8 +104,8 @@ Terminology used in [`overview.md`](overview.md) and across the
   `ObservedStateManager`.)_
 - **WiringContainer** — singleton DI container that maps each
   `DesiredState` type to its (optional) `ObservedStateHandler`
-  and (optional) `ResourceManager`. Tests clear it between cases
-  with `WiringContainer().clear()`. Not for production callers.
+  and (optional) `ResourceManager`. Tests reset it between cases
+  by setting `WiringContainer._instance = None`.
 - **`register_observed_state_handler`** — class decorator that
   binds an `ObservedStateHandler` instance to a `DesiredState`
   subclass. Registers directly with `WiringContainer`.
