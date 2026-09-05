@@ -6,6 +6,7 @@ from .known_state import (
     KnownStateHandler,
     LocalJSONKnownStateHandler,
     LocalYAMLKnownStateHandler,
+    SQLiteKnownStateHandler,
 )
 from .reconciler import Reconciler
 
@@ -18,4 +19,5 @@ __all__ = [
     "LocalJSONKnownStateHandler",
     "LocalYAMLKnownStateHandler",
     "Reconciler",
+    "SQLiteKnownStateHandler",
 ]

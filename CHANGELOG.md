@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `fcntl.lockf` for file locking).
 - `KnownStateHandler` protocol and its implementations:
   `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
+  `SQLiteKnownStateHandler`,
   `AzureStorageKnownStateHandler`, and `AWSS3KnownStateHandler`.
 - `.gitmessage` Conventional Commits v1.0.0 commit message template at the
   repo root, plus a `make install-commit-template` Makefile target to
