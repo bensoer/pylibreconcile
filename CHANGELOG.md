@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `KnownStateHandler` protocol and its implementations:
   `LocalJSONKnownStateHandler`, `LocalYAMLKnownStateHandler`,
   `AzureStorageKnownStateHandler`, and `AWSS3KnownStateHandler`.
+- `WiringContainer` — singleton DI container for `DesiredState`-to-handlers
+  wiring, with MRO-aware `get()` lookup.
+- `register_observed_state_handler` and `register_resource_manager` —
+  class decorators for binding `ObservedStateHandler` and `ResourceManager`
+  instances to `DesiredState` subclasses.
 - `.gitmessage` Conventional Commits v1.0.0 commit message template at the
   repo root, plus a `make install-commit-template` Makefile target to
   wire it into git on this clone.

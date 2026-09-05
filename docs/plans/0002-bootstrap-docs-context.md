@@ -863,7 +863,15 @@ having to re-derive from scratch.
 
 ### Seed 1 — `ObservedStateManager` + `ResourceManager` protocol design
 
-**Status:** conceptual split confirmed (read side / write side);
+**Status:** **closed** by the wiring plan
+(`docs/plans/PLAN.md`). Lookup mechanism: two decorators
+(`@register_observed_state_handler` and `@register_resource_manager`)
+register handler instances with a singleton `WiringContainer`
+(`src/pylibreconcile/wiring/`). Per-type wiring is resolved via MRO
+walk on `WiringContainer.get()`. Remaining open items (sync/async,
+richer object shapes) deferred to future plans.
+
+**Original status:** conceptual split confirmed (read side / write side);
 interface TBD.
 
 **Discussion summary:** the original framing had a single component
@@ -874,18 +882,19 @@ to evolve independently. The conceptual split is now:
 - `ObservedStateManager` — read / comparison / existence checks.
 - `ResourceManager` — create / update / delete (the only mutators).
 
-**Open in this seed:**
-- Method signatures (parameter names, types) for each method.
+**Resolved by PLAN.md:**
+- Lookup mechanism — `WiringContainer` singleton with
+  `@register_observed_state_handler` / `@register_resource_manager`
+  decorators.
+- Method signatures — defined by the `ObservedStateHandler` and
+  `ResourceManager` protocols at
+  `src/pylibreconcile/observed_state/protocol.py` and
+  `src/pylibreconcile/resource_manager/protocol.py`.
+
+**Still open (deferred):**
+- Sync vs. async — should methods be `def` or `async def`? Sync V1.
 - Return types — what they encode (success? new Known State value?
   error info?).
-- Lookup mechanism — how does the Reconciler find the right
-  `ObservedStateManager` and `ResourceManager` for each
-  `DesiredState` instance? Registry? Decorator on `DesiredState`?
-  Convention?
-- Sync vs. async — should methods be `def` or `async def`?
-
-**Discussion source:** D-Q13 (method surface completeness),
-D-Q14 (naming — partially resolved by the split itself).
 
 ### Seed 2 — KnownState value shape
 

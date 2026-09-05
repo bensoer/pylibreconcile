@@ -183,13 +183,21 @@ class ServerResourceManager:
     def delete(self, known): ...
 
 
-# Hand it all to the library
+# Wire per-type handlers with decorators
+@pylibreconcile.register_observed_state_handler(
+    ServerObservedStateManager(api_client),
+)
+@pylibreconcile.register_resource_manager(
+    ServerResourceManager(api_client),
+)
+class ServerDesired(DesiredState):
+    hostname: str
+    port: int
+
+
+# Hand the Desired States and Known State to the library
 reconciler = Reconciler(
-    desired_states=[ServerDesired(hostname="a", port=80)],
-    observed_state_managers={ServerDesired: ServerObservedStateManager()},
-    resource_managers={ServerDesired: ServerResourceManager()},
     known_state_handler=LocalJSONKnownStateHandler(Path("state.json")),
-    import_policy=ImportPolicy.WARN,
 )
 
 # One pass; caller decides when to invoke again

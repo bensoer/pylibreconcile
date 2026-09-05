@@ -7,7 +7,7 @@ Terminology used in [`overview.md`](overview.md) and across the
 
 - **Desired State** — declared intent; what the caller says should
   exist. Implemented as subclasses of `pylibreconcile.DesiredState`
-  (a dataclass base class at `src/pylibreconcile/core.py:6` that
+  (a dataclass base class at `src/pylibreconcile/desired_state/models.py` that
   auto-applies `@dataclass` in `__init_subclass__` and provides a
   `to_hash()` over ordered field values). Stateless — re-reads its
   declarative input on every reconcile pass.
@@ -82,12 +82,14 @@ Terminology used in [`overview.md`](overview.md) and across the
   the *observation / comparison* side of Observed State:
   `is_match(desired, known)`, `exists(...)`, and other read-only
   primitives needed by the decision matrix. Does not mutate
-  reality.
+  reality. Registered per-`DesiredState`-type via the 
+  `@register_observed_state_handler` decorator.
 - **ResourceManager** — per-`DesiredState`-type component for the
   *action* side: `create(...)`, `update(...)`, `delete(...)`. The
   only place that mutates reality. Conceptually distinct from
   `ObservedStateManager` so the read and write surfaces can evolve
-  independently.
+  independently. Registered per-`DesiredState`-type via the
+  `@register_resource_manager` decorator.
 - **ImportPolicy** — a configuration setting that controls what the
   Reconciler does when the matrix says IMPORT. Four modes: `auto`
   (auto-import and continue), `warn` (auto-import but include the
@@ -100,6 +102,16 @@ Terminology used in [`overview.md`](overview.md) and across the
   `ResourceManager`.)_
 - **Observer** — _(deprecated term; absorbed into
   `ObservedStateManager`.)_
+- **WiringContainer** — singleton DI container that maps each
+  `DesiredState` type to its (optional) `ObservedStateHandler`
+  and (optional) `ResourceManager`. Tests clear it between cases
+  with `WiringContainer().clear()`. Not for production callers.
+- **`register_observed_state_handler`** — class decorator that
+  binds an `ObservedStateHandler` instance to a `DesiredState`
+  subclass. Registers directly with `WiringContainer`.
+- **`register_resource_manager`** — class decorator that
+  binds a `ResourceManager` instance to a `DesiredState`
+  subclass. Registers directly with `WiringContainer`.
 
 ## Out-of-scope rows (explicit non-actions)
 
