@@ -90,11 +90,19 @@ Terminology used in [`overview.md`](overview.md) and across the
   `ObservedStateManager` so the read and write surfaces can evolve
   independently. Registered per-`DesiredState`-type via the
   `@register_resource_manager` decorator.
+- **DriftPolicy** — a configuration setting that controls how the
+  Reconciler responds to detected drift. Three modes: `FLAG`
+  (report drift without correcting — requires `ObservedStateHandler`
+  only), `RECREATE` (auto-correct by re-invoking the
+  `ResourceManager`'s `create` / `update` — requires a
+  `ResourceManager`), `ABSTAIN` (skip drift silently — any wiring
+  accepted). Placement: constructor default (`FLAG`) + per-call
+  override.
 - **ImportPolicy** — a configuration setting that controls what the
-  Reconciler does when the matrix says IMPORT. Four modes: `auto`
-  (auto-import and continue), `warn` (auto-import but include the
-  item in the return value so the caller can log it), `reject`
-  (raise / fail immediately), `skip` (do nothing, leave the
+  Reconciler does when the matrix says IMPORT. Four modes: `AUTO`
+  (auto-import and continue), `WARN` (auto-import but include the
+  item in the return value so the caller can log it), `REJECT`
+  (raise / fail immediately), `SKIP` (do nothing, leave the
   resource unmanaged). Placement: constructor default + per-call
   override.
 - **ObservedState** — _(deprecated term; the original combined
