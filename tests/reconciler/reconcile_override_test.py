@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from pylibreconcile import DesiredState, DriftPolicy, ImportPolicy, Reconciler
+from pylibreconcile.policy import Configuration
 from pylibreconcile.wiring import register_observed_state_handler, register_resource_manager
 
 
@@ -46,7 +47,7 @@ def test_reconcile_accepts_drift_policy_override() -> None:
     states = [ExampleState(id=1)]
     reconciler = Reconciler(states, known_state_handler=None)  # type: ignore
     # Should not raise
-    reconciler.reconcile(drift_policy=DriftPolicy.FLAG)
+    reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.FLAG))
 
 
 def test_reconcile_accepts_import_policy_override() -> None:
@@ -58,7 +59,7 @@ def test_reconcile_accepts_import_policy_override() -> None:
     states = [ExampleState(id=1)]
     reconciler = Reconciler(states, known_state_handler=None)  # type: ignore
     # Should not raise
-    reconciler.reconcile(import_policy=ImportPolicy.AUTO)
+    reconciler.reconcile(config=Configuration(import_policy=ImportPolicy.AUTO))
 
 
 def test_reconcile_stores_effective_drift_policy() -> None:
@@ -69,8 +70,8 @@ def test_reconcile_stores_effective_drift_policy() -> None:
 
     states = [ExampleState(id=1)]
     reconciler = Reconciler(states, known_state_handler=None)  # type: ignore
-    reconciler.reconcile(drift_policy=DriftPolicy.RECREATE)
-    assert reconciler._effective_drift_policy == DriftPolicy.RECREATE
+    reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.RECREATE))
+    assert reconciler._effective_config.drift_policy == DriftPolicy.RECREATE
 
 
 def test_reconcile_stores_effective_import_policy() -> None:
@@ -81,8 +82,8 @@ def test_reconcile_stores_effective_import_policy() -> None:
 
     states = [ExampleState(id=1)]
     reconciler = Reconciler(states, known_state_handler=None)  # type: ignore
-    reconciler.reconcile(import_policy=ImportPolicy.AUTO)
-    assert reconciler._effective_import_policy == ImportPolicy.AUTO
+    reconciler.reconcile(config=Configuration(import_policy=ImportPolicy.AUTO))
+    assert reconciler._effective_config.import_policy == ImportPolicy.AUTO
 
 
 def test_reconcile_override_none_falls_back_to_constructor() -> None:
@@ -95,11 +96,11 @@ def test_reconcile_override_none_falls_back_to_constructor() -> None:
     reconciler = Reconciler(
         states,
         known_state_handler=None,  # type: ignore
-        drift_policy=DriftPolicy.ABSTAIN,
+        config=Configuration(drift_policy=DriftPolicy.ABSTAIN),
     )
     # Call with explicit None should fall back to constructor value
-    reconciler.reconcile(drift_policy=None)
-    assert reconciler._effective_drift_policy == DriftPolicy.ABSTAIN
+    reconciler.reconcile(config=None)
+    assert reconciler._effective_config.drift_policy == DriftPolicy.ABSTAIN
 
 
 def test_reconcile_recreate_override_validates_wiring() -> None:
@@ -110,12 +111,14 @@ def test_reconcile_recreate_override_validates_wiring() -> None:
 
     states = [ObserverOnlyState(id=1)]
     # Constructor uses FLAG (doesn't require manager)
-    reconciler = Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    reconciler = Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
     # Override to RECREATE should validate wiring and fail
     with pytest.raises(
         ValueError, match=r"Reconciler.reconcile\(drift_policy=RECREATE\):.*ResourceManager"
     ):
-        reconciler.reconcile(drift_policy=DriftPolicy.RECREATE)
+        reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.RECREATE))
 
 
 def test_reconcile_recreate_override_with_manager_succeeds() -> None:
@@ -126,9 +129,13 @@ def test_reconcile_recreate_override_with_manager_succeeds() -> None:
 
     states = [ExampleState(id=1)]
     # Constructor uses FLAG
-    reconciler = Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    reconciler = Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
     # Override to RECREATE should succeed since we have both observer and manager
-    reconciler.reconcile(drift_policy=DriftPolicy.RECREATE)  # Should not raise
+    reconciler.reconcile(
+        config=Configuration(drift_policy=DriftPolicy.RECREATE)
+    )  # Should not raise
 
 
 def test_reconcile_stub_returns_input_list() -> None:
@@ -159,8 +166,10 @@ def test_reconcile_accepts_abstain_override() -> None:
         id: int
 
     states = [ExampleState(id=1)]
-    reconciler = Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
-    reconciler.reconcile(drift_policy=DriftPolicy.ABSTAIN)
+    reconciler = Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
+    reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.ABSTAIN))
 
 
 def test_reconcile_multiple_calls_with_different_overrides() -> None:
@@ -174,13 +183,15 @@ def test_reconcile_multiple_calls_with_different_overrides() -> None:
         id: int
 
     states = [ExampleState(id=1)]
-    reconciler = Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    reconciler = Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
 
-    reconciler.reconcile(drift_policy=DriftPolicy.FLAG)
-    assert reconciler._effective_drift_policy == DriftPolicy.FLAG
+    reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.FLAG))
+    assert reconciler._effective_config.drift_policy == DriftPolicy.FLAG
 
-    reconciler.reconcile(drift_policy=DriftPolicy.RECREATE)
-    assert reconciler._effective_drift_policy == DriftPolicy.RECREATE
+    reconciler.reconcile(config=Configuration(drift_policy=DriftPolicy.RECREATE))
+    assert reconciler._effective_config.drift_policy == DriftPolicy.RECREATE
 
-    reconciler.reconcile(drift_policy=None)
-    assert reconciler._effective_drift_policy == DriftPolicy.FLAG
+    reconciler.reconcile(config=None)
+    assert reconciler._effective_config.drift_policy == DriftPolicy.FLAG

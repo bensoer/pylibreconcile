@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from pylibreconcile import DesiredState, DriftPolicy, Reconciler
+from pylibreconcile.policy import Configuration
 from pylibreconcile.wiring import register_observed_state_handler, register_resource_manager
 
 
@@ -32,7 +33,9 @@ def test_constructor_accepts_observer_only_with_flag() -> None:
 
     states = [ExampleState(id=1)]
     # Should not raise
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
 
 
 def test_constructor_accepts_manager_only_with_flag() -> None:
@@ -42,7 +45,9 @@ def test_constructor_accepts_manager_only_with_flag() -> None:
 
     states = [ExampleState(id=1)]
     # Should not raise
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
 
 
 def test_constructor_accepts_both_with_flag() -> None:
@@ -53,7 +58,9 @@ def test_constructor_accepts_both_with_flag() -> None:
 
     states = [ExampleState(id=1)]
     # Should not raise
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG)
+    )  # type: ignore
 
 
 def test_constructor_accepts_any_wiring_with_abstain() -> None:
@@ -75,7 +82,9 @@ def test_constructor_accepts_any_wiring_with_abstain() -> None:
 
     states = [ObserverOnlyState(id=1), ManagerOnlyState(id=2), BothState(id=3)]
     # Should not raise for any combination with ABSTAIN
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.ABSTAIN)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.ABSTAIN)
+    )  # type: ignore
 
 
 def test_constructor_recreate_requires_manager() -> None:
@@ -87,7 +96,11 @@ def test_constructor_recreate_requires_manager() -> None:
     with pytest.raises(
         ValueError, match=r"Reconciler.__init__: wiring does not satisfy policy.*ResourceManager"
     ):
-        Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.RECREATE)  # type: ignore
+        Reconciler(
+            states,
+            known_state_handler=None,
+            config=Configuration(drift_policy=DriftPolicy.RECREATE),
+        )  # type: ignore
 
 
 def test_constructor_recreate_with_manager_succeeds() -> None:
@@ -97,8 +110,9 @@ def test_constructor_recreate_with_manager_succeeds() -> None:
         id: int
 
     states = [ExampleState(id=1)]
-    # Should not raise
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.RECREATE)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.RECREATE)
+    )  # type: ignore
 
 
 def test_constructor_rejects_no_wiring() -> None:
@@ -152,8 +166,9 @@ def test_constructor_mro_walk_with_recreate() -> None:
         id: int
 
     states = [ChildState(id=1)]
-    # Should not raise - MRO walk finds ParentState's manager
-    Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.RECREATE)  # type: ignore
+    Reconciler(
+        states, known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.RECREATE)
+    )  # type: ignore
 
 
 def test_constructor_mro_walk_recreate_without_manager() -> None:
@@ -168,12 +183,16 @@ def test_constructor_mro_walk_recreate_without_manager() -> None:
     with pytest.raises(
         ValueError, match=r"Reconciler.__init__: wiring does not satisfy policy.*ResourceManager"
     ):
-        Reconciler(states, known_state_handler=None, drift_policy=DriftPolicy.RECREATE)  # type: ignore
+        Reconciler(
+            states,
+            known_state_handler=None,
+            config=Configuration(drift_policy=DriftPolicy.RECREATE),
+        )  # type: ignore
 
 
 def test_constructor_empty_iterable_accepted() -> None:
     # Should not raise - nothing to validate
-    Reconciler([], known_state_handler=None, drift_policy=DriftPolicy.FLAG)  # type: ignore
+    Reconciler([], known_state_handler=None, config=Configuration(drift_policy=DriftPolicy.FLAG))  # type: ignore
 
 
 def test_constructor_rejects_bare_desired_state() -> None:
